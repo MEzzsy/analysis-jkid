@@ -5,6 +5,10 @@ import java.lang.reflect.Type
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 
+//KAnnotatedElement是Kotlin反射Api相关类的父类，如KClass
+//KAnnotatedElement接口内部有属性annotations，
+//它是一个由应用到源码中元素上的所有注解(具有运行时保留期)的实例组成的集合。
+//这段代码可能有bug，如果一个属性有多个注解（包含T），并且第一个不是T，可能就会错过这个属性
 inline fun <reified T> KAnnotatedElement.findAnnotation(): T?
         = annotations.filterIsInstance<T>().firstOrNull()
 
