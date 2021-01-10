@@ -2,6 +2,13 @@ package ru.yole.jkid.deserialization
 
 import java.io.Reader
 
+/**
+ * 语法解析器
+ *
+ * 根据词法分析器分析返回的Token，进行解析，如
+ * {    "title" :   "Catch-22"  ,   "author"    :   {   "name"  :   "zzsy"  }   }
+ * 解析出title是属性，值是Catch-22，author是属性，值是{   "name"  :   "zzsy"  }，并对值再次解析
+ */
 class Parser(reader: Reader, val rootObject: JsonObject) {
     private val lexer = Lexer(reader)
 

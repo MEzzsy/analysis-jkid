@@ -8,9 +8,18 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaType
 
+/**
+ * 之所以用一个类包装cacheData，是因为：
+ * cacheData的get返回的是ClassInfo<*>对象，需要强转才能正常使用，
+ * 每次调用的时候都需要强转，而且有可能导致类型错误。
+ * 用一个额外的get方法可以解决这个问题。
+ */
 class ClassInfoCache {
     private val cacheData = mutableMapOf<KClass<*>, ClassInfo<*>>()
 
+    /**
+     * getOrPut，如果get为null就将lambda的内容put
+     */
     @Suppress("UNCHECKED_CAST")
     operator fun <T : Any> get(cls: KClass<T>): ClassInfo<T> =
             cacheData.getOrPut(cls) { ClassInfo(cls) } as ClassInfo<T>
@@ -18,11 +27,26 @@ class ClassInfoCache {
 
 class ClassInfo<T : Any>(cls: KClass<T>) {
     private val className = cls.qualifiedName
+
+    /**
+     * 获取主构造器
+     */
     private val constructor = cls.primaryConstructor
             ?: throw JKidException("Class ${cls.qualifiedName} doesn't have a primary constructor")
 
+    /**
+     * json中每个键对应构造器的形参
+     */
     private val jsonNameToParamMap = hashMapOf<String, KParameter>()
+
+    /**
+     * 形参对应的序列化器
+     */
     private val paramToSerializerMap = hashMapOf<KParameter, ValueSerializer<out Any?>>()
+
+    /**
+     * 存储指定DeserializeInterface注解的属性
+     */
     private val jsonNameToDeserializeClassMap = hashMapOf<String, Class<out Any>?>()
 
     init {

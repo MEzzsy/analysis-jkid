@@ -77,6 +77,14 @@ internal class CharReader(val reader: Reader) {
     }
 }
 
+/**
+ * 词法解析器
+ * 对Json字符串进行词法解析，如：
+ * {"title":"Catch-22","author":{"name":"zzsy"}} 分解为
+ * {    "title" :   "Catch-22"  ,   "author"    :   {   "name"  :   "zzsy"  }   }
+ *
+ * Lexer的解析是逐字分析，当遇到特殊字符时，就返回对应的Token（见tokenMap）
+ */
 class Lexer(reader: Reader) {
     private val charReader = CharReader(reader)
 

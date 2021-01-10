@@ -9,6 +9,19 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.javaType
 
+/**
+ * 反序列接口
+ *
+ * JKid中的JSON反序列化器使用相当普通的方式实现，由三个主要阶段组成：
+ * 词法分析器(lexer)、语法分析器（解析器），以及反序列化组件本身
+ *
+ * 反序列接口比较复杂。
+ * 词法分析器根据传入的Json字符串逐字分析，返回对应的Token。
+ * 语法分析器根据Token进行解析，提取出属性和值，并缓存结果。
+ * 解析完成，需要调用spawn()方法生成对象，其原理就是将属性和值的缓存取出来，反射调用主构造器生成对象。
+ * Jkid要求数据类具有主构造器，并且具有所有参数。
+ */
+
 inline fun <reified T: Any> deserialize(json: String): T {
     return deserialize(StringReader(json))
 }
@@ -23,6 +36,10 @@ fun <T: Any> deserialize(json: Reader, targetClass: KClass<T>): T {
     return seed.spawn()
 }
 
+/**
+ * JsonObject接口跟踪当前正在被反序列化的对象或数组。
+ * 解析器在发现当前对象的新属性(简单值、复合属性或数组)时调用相应的方法。
+ */
 interface JsonObject {
     fun setSimpleProperty(propertyName: String, value: Any?)
 
@@ -69,9 +86,19 @@ class ObjectSeed<out T: Any>(
 
     private val classInfo: ClassInfo<T> = classInfoCache[targetClass]
 
+    /**
+     * 属性与值的map
+     */
     private val valueArguments = mutableMapOf<KParameter, Any?>()
+
+    /**
+     * 也是属性与值的map，但是需要再次解析
+     */
     private val seedArguments = mutableMapOf<KParameter, Seed>()
 
+    /**
+     * 构建一个从构造方法参数到它们的值的映射
+     */
     private val arguments: Map<KParameter, Any?>
         get() = valueArguments + seedArguments.mapValues { it.value.spawn() }
 
@@ -88,6 +115,9 @@ class ObjectSeed<out T: Any>(
         return seed.apply { seedArguments[param] = this }
     }
 
+    /**
+     * 生成json对应的对象
+     */
     override fun spawn(): T = classInfo.createInstance(arguments)
 }
 
